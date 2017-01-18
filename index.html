@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+    <meta charset="UTF-8">
+    <title>Products with Orders Demo</title>
+    <script src="angular.js" charset="utf-8"></script>
+
+    <style>
+        .product-wrapper{
+            outline: 1px solid blue;
+            margin-bottom: 25px;
+        }
+        .orders-wrapper{
+            outline: 1px solid green;
+        }
+        th{
+            width: 200px;
+        }
+        table{
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .toggle-btn:hover{
+            cursor: pointer;
+        }
+
+        .green{
+            background-color: green;
+        }
+        .blue{
+            background-color: blue;
+        }
+
+
+    </style>
+
+
+    <script>
+        var myApp = angular.module("app", []);
+
+        myApp.factory('productsFactory', function($http){
+            var factory = {};
+
+            var products = [
+                {
+                    name: "iPhone",
+                    price: 899,
+                    quantity: 50
+                },
+                {
+                    name: "iPad",
+                    price: 699,
+                    quantity: 50
+                },
+                {
+                    name: "MacBook Pro",
+                    price: 2999,
+                    quantity: 50
+                }
+            ];
+
+
+            factory.getProducts = function(callback){
+                callback(products);
+            };
+
+            factory.add = function(newProduct, callback){
+                newProduct.quantity = 50;
+                products.push(newProduct);
+                callback(products);
+            };
+
+            factory.destroy = function(idx, callback){
+                products.splice(idx, 1);
+                callback(products);
+            };
+
+
+            factory.buy = function (idx, callback) {
+
+                if (products[idx].quantity == 0){
+                    alert("out of stock!!!");
+                } else {
+                    products[idx].quantity--;
+                }
+                callback(products);
+            };
+
+
+            return factory;
+        });
+
+
+
+
+        myApp.controller('productsController', function($scope, productsFactory){
+            $scope.products = [];
+            productsFactory.getProducts(function(data){
+                $scope.products = data;
+
+            });
+            $scope.addProduct = function(){
+                productsFactory.add($scope.newProduct, function(data){
+                    $scope.products = data;
+                });
+
+                $scope.newProduct = {};
+            };
+            $scope.deleteProduct = function(idx){
+                console.log("deleting product");
+
+                productsFactory.destroy(idx, function(data){
+                    $scope.products = data;
+                });
+
+            }
+        });
+
+
+        myApp.controller('ordersController', function($scope, productsFactory){
+            $scope.products = [];
+
+            $scope.order = 'name';
+
+            productsFactory.getProducts(function(data){
+                $scope.products = data;
+            });
+
+
+            $scope.buyProduct = function(idx){
+                console.log("buying product");
+
+                productsFactory.buy(idx, function(data){
+                    $scope.products = data;
+                });
+            };
+
+            $scope.togglePrice = function(){
+                if($scope.order == 'name'){
+                    $scope.order = '-name';
+                } else {
+                    $scope.order = 'name';
+                }
+            }
+
+        });
+
+
+
+
+    </script>
+
+
+
+
+</head>
+<body>
+
+    <div ng-controller="productsController" class="product-wrapper">
+        <h1>Products Controller</h1>
+        Name: <input type="text" ng-model="newProduct.name">
+        Price: <input type="text" ng-model="newProduct.price">
+        <button ng-click="addProduct()">Add Product</button>
+        <table>
+            <thead>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </thead>
+            <tbody>
+                <tr ng-repeat="p in products">
+                    <td>{{p.name}}</td>
+                    <td>{{p.price | currency}}</td>
+                    <td><button ng-click="deleteProduct($index)">delete</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+
+    <div ng-controller="ordersController" class="orders-wrapper">
+        <h1>Orders Controller</h1>
+
+        <table>
+            <thead>
+            <th>Name</th>
+            <th ng-click="togglePrice()" class="toggle-btn" ng-class="{'green':order == 'name', 'blue':order == '-name'}">Price</th>
+            <th>Quantity</th>
+            <th>Actions</th>
+            </thead>
+            <tbody>
+            <tr ng-repeat="p in products | orderBy: order">
+                <td>{{p.name}}</td>
+                <td>{{p.price | currency}}</td>
+                <td>{{p.quantity}}</td>
+                <td><button ng-click="buyProduct($index)">buy</button></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+
+</body>
+</html>
